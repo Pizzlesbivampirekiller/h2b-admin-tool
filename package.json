@@ -1,18 +1,6 @@
 {
-  "name": "h2b-admin-tool",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "express": "^5.2.1",
-    "multer": "^2.2.0",
-    "simple-git": "^3.36.0"
+    "build": "echo OK"
   }
 }
