@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H2B Paws Admin</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7F2; color: #1A1A1A; }
+.header { background: #1A1A1A; color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-family: 'Playfair Display', serif; font-size: 20px; }
+.header span { color: #C47354; }
+.tabs { display: flex; gap: 4px; background: #fff; border-bottom: 1px solid #E8D5C4; padding: 0 24px; }
+.tab { padding: 12px 20px; border: none; background: none; cursor: pointer; font-size: 14px; color: #888; border-bottom: 2px solid transparent; transition: all .2s; }
+.tab.active { color: #C47354; border-bottom-color: #C47354; }
+.content { padding: 24px; max-width: 1000px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 12px; border: 1px solid #E8D5C4; }
+.card h3 { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 12px; }
+.card img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 11px; color: #999; margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+.field input, .field textarea, .field select { width: 100%; padding: 8px 12px; border: 1px solid #E8D5C4; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; }
+.field textarea { min-height: 60px; }
+.field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: #C47354; }
+.btn { padding: 8px 20px; border: none; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s; }
+.btn-primary { background: #C47354; color: #fff; }
+.btn-primary:hover { background: #A85D3F; }
+.btn-dark { background: #1A1A1A; color: #fff; }
+.btn-dark:hover { background: #333; }
+.btn-outline { background: transparent; border: 1px solid #E8D5C4; color: #666; }
+.btn-outline:hover { border-color: #333; color: #333; }
+.btn-danger { background: transparent; color: #e74c3c; border: 1px solid transparent; }
+.btn-danger:hover { border-color: #e74c3c; }
+.btn-sm { padding: 4px 12px; font-size: 11px; }
+.btn-lg { padding: 14px 32px; font-size: 15px; }
+.flex { display: flex; gap: 8px; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.preview { width: 40px; height: 40px; border-radius: 6px; background-size: cover; background-position: center; border: 1px solid #E8D5C4; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1A1A1A; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 13px; z-index: 999; opacity: 0; transition: opacity .3s; }
+.toast.show { opacity: 1; }
+.toast.success { border-left: 3px solid #8FA88F; }
+.toast.error { border-left: 3px solid #e74c3c; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.status-dot.green { background: #8FA88F; }
+.upload-zone { border: 2px dashed #E8D5C4; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all .2s; }
+.upload-zone:hover { border-color: #C47354; background: rgba(196,115,84,.05); }
+.upload-zone.dragover { border-color: #C47354; background: rgba(196,115,84,.1); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>H2B <span>Paws</span> Admin</h1>
+  <div class="flex">
+    <span style="font-size:11px;opacity:.5">Local Tool</span>
+    <span class="status-dot green"></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('products')">Products</button>
+  <button class="tab" onclick="switchTab('content')">Content</button>
+  <button class="tab" onclick="switchTab('upload')">Upload Images</button>
+  <button class="tab" onclick="switchTab('deploy')">Deploy</button>
+</div>
+
+<div class="content">
+  <!-- Products Tab -->
+  <div id="tab-products" class="tab-content active">
+    <div class="flex-between" style="margin-bottom:16px"><h2 style="font-family:'Playfair Display',serif">Products</h2>
+      <button class="btn btn-dark btn-sm" onclick="saveProducts()">Save All Changes</button>
+    </div>
+    <div id="products-list"></div>
+  </div>
+
+  <!-- Content Tab -->
+  <div id="tab-content" class="tab-content">
+    <div class="flex-between" style="margin-bottom:16px"><h2 style="font-family:'Playfair Display',serif">Content & Text</h2>
+      <button class="btn btn-dark btn-sm" onclick="saveContent()">Save All</button>
+    </div>
+    <div id="content-fields"></div>
+  </div>
+
+  <!-- Upload Tab -->
+  <div id="tab-upload" class="tab-content">
+    <h2 style="font-family:'Playfair Display',serif;margin-bottom:16px">Upload Images</h2>
+    <div class="card">
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <p style="font-size:24px;margin-bottom:8px">+</p>
+        <p style="color:#999">Click or drag image here</p>
+        <p style="font-size:11px;color:#ccc;margin-top:4px">Uploads to public/ folder</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="uploadFile(this.files[0])">
+    </div>
+    <div id="uploaded-list" class="card" style="display:none">
+      <h3>Recently Uploaded</h3>
+      <div id="uploaded-images" class="flex" style="flex-wrap:wrap"></div>
+    </div>
+  </div>
+
+  <!-- Deploy Tab -->
+  <div id="tab-deploy" class="tab-content">
+    <h2 style="font-family:'Playfair Display',serif;margin-bottom:16px">Deploy to GitHub</h2>
+    <div class="card" style="text-align:center;padding:40px">
+      <p style="font-size:48px;margin-bottom:16px"></p>
+      <p style="color:#666;margin-bottom:24px">Build the project and push to GitHub.<br>Vercel will auto-deploy after push.</p>
+      <div class="flex" style="justify-content:center;gap:12px">
+        <button class="btn btn-outline btn-lg" onclick="doBuild()">1. Build</button>
+        <button class="btn btn-dark btn-lg" onclick="doPush()">2. Push</button>
+        <button class="btn btn-primary btn-lg" onclick="doDeploy()">One-Click Deploy</button>
+      </div>
+      <div id="deploy-log" style="margin-top:20px;font-size:12px;color:#999;text-align:left;max-height:200px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API = '';
+let products = [];
+let content = {};
+
+// Load data on startup
+async function load() {
+  const [pRes, cRes] = await Promise.all([fetch('/api/products'), fetch('/api/content')]);
+  products = await pRes.json();
+  content = await cRes.json();
+  renderProducts();
+  renderContent();
+}
+load();
+
+// Tabs
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+}
+
+// Toast
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// === Products ===
+function renderProducts() {
+  const el = document.getElementById('products-list');
+  el.innerHTML = products.map((p, i) => `
+    <div class="card">
+      <div class="flex" style="gap:16px">
+        <img src="${p.images?.[0] || ''}" onerror="this.style.display='none'" alt="">
+        <div style="flex:1">
+          <div class="grid">
+            <div class="field"><label>Name</label><input value="${esc(p.name)}" onchange="updateProduct(${i},'name',this.value)"></div>
+            <div class="field"><label>Price</label><input type="number" value="${p.price}" onchange="updateProduct(${i},'price',+this.value)"></div>
+            <div class="field"><label>Image URL</label><div class="flex" style="gap:4px"><input value="${esc(p.images?.[0] || '')}" onchange="updateProductImage(${i},0,this.value)" style="flex:1"><button class="btn btn-outline btn-sm" onclick="replaceProductImage(${i},0)">Upload</button></div></div>
+            <div class="field"><label>Badge</label><input value="${esc(p.badge || '')}" onchange="updateProduct(${i},'badge',this.value||null)"></div>
+          </div>
+          <div class="field"><label>Description</label><textarea onchange="updateProduct(${i},'description',this.value)">${esc(p.description || '')}</textarea></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function updateProduct(i, key, val) { products[i][key] = val; }
+function updateProductImage(i, imgIdx, url) {
+  if (!products[i].images) products[i].images = [];
+  products[i].images[imgIdx] = url;
+}
+
+async function saveProducts() {
+  const res = await fetch('/api/products', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(products) });
+  showToast(res.ok ? 'Products saved to source file!' : 'Save failed', res.ok ? 'success' : 'error');
+}
+
+// === Content ===
+function renderContent() {
+  const el = document.getElementById('content-fields');
+  const sections = [
+    { title: 'Hero', keys: ['heroBadge','heroHeadline1','heroHeadlineItalic','heroSubheading','heroCta1','heroCta2'] },
+    { title: 'Splash', keys: ['splashSlogan'] },
+    { title: 'Featured', keys: ['featuredSubtitle','featuredTitle','featuredDesc'] },
+    { title: 'Categories', keys: ['categoriesSubtitle','categoriesTitle','categoriesDesc'] },
+    { title: 'Testimonials', keys: ['testimonialsSubtitle','testimonialsTitle'] },
+    { title: 'CTA', keys: ['ctaHeadline','ctaHeadlineItalic','ctaSubheading'] },
+    { title: 'About', keys: ['aboutTitle','aboutDesc'] },
+    { title: 'Contact', keys: ['contactTitle','contactDesc'] },
+    { title: 'Footer', keys: ['footerTitle','footerDesc'] },
+    { title: 'Shop', keys: ['shopTitle','shopSubtitle','shopDesc'] },
+    { title: 'Backgrounds', keys: ['bgCta','bgAbout','bgContact'] },
+  ];
+  el.innerHTML = sections.map(s => `
+    <div class="card">
+      <h3>${s.title}</h3>
+      ${s.keys.map(k => `
+        <div class="field">
+          <label>${k}</label>
+          ${content[k] && content[k].length > 50
+            ? `<textarea onchange="content['${k}']=this.value">${esc(content[k] || '')}</textarea>`
+            : `<input value="${esc(content[k] || '')}" onchange="content['${k}']=this.value">`}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+async function saveContent() {
+  const res = await fetch('/api/content', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(content) });
+  showToast(res.ok ? 'Content saved!' : 'Save failed', res.ok ? 'success' : 'error');
+}
+
+// === Upload ===
+function replaceProductImage(productIndex, imgIndex) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const fd = new FormData(); fd.append('file', file);
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) {
+      updateProductImage(productIndex, imgIndex, d.url);
+      showToast('Image replaced!');
+      renderProducts(); // re-render
+    }
+  };
+  input.click();
+}
+
+function uploadFile(file) {
+  if (!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  fetch('/api/upload', { method: 'POST', body: fd })
+    .then(r => r.json()).then(d => {
+      if (d.success) {
+        showToast('Uploaded! URL: ' + d.url);
+        document.getElementById('uploaded-list').style.display = 'block';
+        document.getElementById('uploaded-images').innerHTML +=
+          `<div style="text-align:center"><img src="${d.url}?t=${Date.now()}" style="width:100px;height:100px;object-fit:cover;border-radius:8px"><br><small style="color:#999;font-size:10px">${d.url}</small></div>`;
+      }
+    }).catch(() => showToast('Upload failed', 'error'));
+}
+
+// Drag & drop
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); uploadFile(e.dataTransfer.files[0]); });
+
+// === Deploy ===
+function log(msg) { document.getElementById('deploy-log').innerHTML += `<div>${msg}</div>`; }
+
+async function doBuild() {
+  log('Building...');
+  const r = await fetch('/api/build', { method: 'POST' });
+  const d = await r.json();
+  log(d.success ? 'Build completed!' : 'Build FAILED: ' + d.message);
+  showToast(d.message, d.success ? 'success' : 'error');
+}
+
+async function doPush() {
+  log('Pushing to GitHub...');
+  const r = await fetch('/api/push', { method: 'POST' });
+  const d = await r.json();
+  log(d.success ? 'Pushed to GitHub!' : 'Push FAILED: ' + d.message);
+  showToast(d.message, d.success ? 'success' : 'error');
+}
+
+async function doDeploy() {
+  log('=== One-Click Deploy ===');
+  log('1/2 Building...');
+  const build = await (await fetch('/api/build', { method: 'POST' })).json();
+  log(build.success ? 'Build OK' : 'Build FAILED: ' + build.message);
+  if (!build.success) return showToast('Build failed', 'error');
+  log('2/2 Pushing...');
+  const push = await (await fetch('/api/push', { method: 'POST' })).json();
+  log(push.success ? 'Pushed OK! Vercel will auto-deploy.' : 'Push FAILED: ' + push.message);
+  showToast(push.success ? 'Deploy complete! Vercel is deploying...' : 'Push failed', push.success ? 'success' : 'error');
+}
+</script>
+</body>
+</html>
